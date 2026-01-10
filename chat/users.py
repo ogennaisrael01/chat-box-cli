@@ -1,52 +1,45 @@
+from typing import Optional, Tuple, Dict
 from storage import save_users, fetch_users
 import uuid
 
-def to_dict(user_data: str) -> dict:
+
+def to_dict(user_data: str) -> Dict[str, str]:
+    """Convert the provided user data into a dict with a username key."""
+    return {"username": user_data}
+
+
+def add_account() -> Dict[str, str]:
+    """Interactively create and persist a user account.
+
+    Returns the created user dict.
     """
-    Convert the provided user data into a dict
-    """
-    return {
-        "username": user_data
-    }
+    username = input("Enter your username: ").strip()
+    if not username or username.isdigit():
+        raise ValueError("Only non-empty alphabetic usernames are allowed")
 
-
-def add_account():
-    username = input("Enter your username: ")
-
-    if username.isdigit():
-        return "only strings are allowed for usernames"
-
-    username.title()
-
+    username = username.title()
     user_data = to_dict(username)
-    user_data.update({
-        "user_id": str(uuid.uuid4())
-    }
-    )
-    print(user_data)
+    user_data.update({"user_id": str(uuid.uuid4())})
     save_users(user_data=user_data)
-    
-
-    return f"User {user_data["user_id"]} saved"
+    return user_data
 
 
-def check_user_in_db(user_name):
+def check_user_in_db(user_name: str) -> bool:
+    """Return True if `user_name` exists in the database."""
     users = fetch_users()
-    for user in users:
-        if user[1] == user_name:
+    for _, name in users:
+        if name == user_name:
             return True
-        
-        else:
-            return False
+    return False
 
-def get_user_by_username(username):
+
+def get_user_by_username(username: str) -> Optional[Tuple[str, str]]:
+    """Return a `(user_id, username)` tuple or None if not found."""
     users = fetch_users()
     for user in users:
-        user_name = user[1]
-        if user_name == username:
+        if user[1] == username:
             return user
-        
-    return False
+    return None
 
 
     

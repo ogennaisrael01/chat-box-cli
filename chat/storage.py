@@ -1,102 +1,101 @@
 import sqlite3
 import functools
 from sqlite3 import Connection
+from typing import Dict, List, Tuple, Optional
+
+
+class DatabaseError(Exception):
+    pass
+
 
 def db_connection(func):
+    """Decorator that opens a sqlite3 connection and ensures it's closed.
+
+    The wrapped function receives the `Connection` as the first argument.
+    Database errors are raised as `DatabaseError` for callers to handle.
+    """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        conn: Optional[Connection] = None
         try:
-            connection = sqlite3.connect("chat_box")
-            if not connection:
-                return "Faild to connect ot database"
-            
-            response = func(connection, *args, **kwargs)
-            return response
+            conn = sqlite3.connect("chat_box.db")
+            conn.row_factory = sqlite3.Row
+            result = func(conn, *args, **kwargs)
+            # Persist any changes made by the inner function
+            conn.commit()
+            return result
         except sqlite3.Error as exc:
-            return f"Database error: {str(exc)}"
-        
+            raise DatabaseError(str(exc))
+        finally:
+            if conn:
+                conn.close()
+
     return wrapper
 
 
 @db_connection
-def create_table_users(connection: Connection):
-    try:
-        cursor = connection.cursor()
-
-        query = """
-            CREATE TABLE IF NOT EXISTS users (
-            user_id TEXT PRIMARY KEY,
-            username TEXT
-        )
-        """
-
-        cursor.execute(query)
-
-        connection.commit()
-    except sqlite3.Error as exc:
-        return f"Failed to create table 'user': {str(exc)}"
-    
-    return "Tablse 'users' Created Successfully.."
-
+def create_table_users(connection: Connection) -> None:
+    cursor = connection.cursor()
+    query = """
+    CREATE TABLE IF NOT EXISTS users (
+        user_id TEXT PRIMARY KEY,
+        username TEXT NOT NULL
+    )
+    """
+    cursor.execute(query)
 
 
 @db_connection
-def save_users(conn: Connection, user_data: dict):
-
+def save_users(conn: Connection, user_data: Dict[str, str]) -> str:
+    """Insert a user record and return the user_id."""
     cursor = conn.cursor()
-    user_id = user_data.get("user_id", None)
-
-    user_name = user_data.get("username", None)
-
+    user_id = user_data.get("user_id")
+    username = user_data.get("username")
+    if not user_id or not username:
+        raise ValueError("user_data must include 'user_id' and 'username'")
     query = "INSERT INTO users (user_id, username) VALUES (?, ?)"
-
-    # user data in tuple
-    data = (user_id, user_name)
-    try:
-        # Exceute query and commit query
-        cursor.execute(query, data)
-        conn.commit()
-    except sqlite3.Error as exc:
-        print(str(exc))
-        return f"Error while saving user: {str(exc)}"
-    return f"Inserted {str(user_id)} user ID INTO database"
-
-@db_connection
-def fetch_users(connection: Connection):
-    cursor = connection.cursor()
-
-    query = "SELECT * FROM users"
-
-    try:
-        cursor.execute(query)
-
-        response = cursor.fetchall()
-    except sqlite3.Error as exc:
-        print(str(exc))
-        return f"Error fetching user data: {str(exc)}"
-    for data in response:
-        yield data
+    cursor.execute(query, (user_id, username))
+    return user_id
 
 
 @db_connection
-def create_chat_table(connection: Connection):
+def fetch_users(connection: Connection) -> List[Tuple[str, str]]:
+    """Return all users as a list of `(user_id, username)` tuples."""
     cursor = connection.cursor()
+    query = "SELECT user_id, username FROM users"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    return [(row[0], row[1]) for row in rows]
 
-    query = """ CREATE TEBLE IF NOT EXISTS chat (
-        chat_id INTERGER PRIMARY KEY,
-        message TEXT,
-        sender TEXT,
-        receiver TEXT
-    )"""
 
-    try:
-        cursor.execute(query)
+@db_connection
+def create_chat_table(connection: Connection) -> None:
+    cursor = connection.cursor()
+    query = """
+    CREATE TABLE IF NOT EXISTS chat (
+        chat_id TEXT PRIMARY KEY,
+        message TEXT NOT NULL,
+        sender TEXT NOT NULL,
+        receiver TEXT NOT NULL
+    )
+    """
+    cursor.execute(query)
 
-        connection.commit()
-    except sqlite3.Error as exc:
-        return f"Error occured while creating 'chat' table "
-    
-    return f"'chat' table created successfully"
+
+@db_connection
+def save_chat(conn: Connection, chat_data: Dict[str, str]) -> str:
+    """Insert a chat message and return the chat_id."""
+    cursor = conn.cursor()
+    chat_id = chat_data.get("chat_id")
+    message = chat_data.get("chat_message")
+    sender = chat_data.get("sender")
+    receiver = chat_data.get("receiver")
+    if not all([chat_id, message, sender, receiver]):
+        raise ValueError("chat_data must include 'chat_id','chat_message','sender','receiver'")
+    query = "INSERT INTO chat (chat_id, message, sender, receiver) VALUES (?, ?, ?, ?)"
+    cursor.execute(query, (chat_id, message, sender, receiver))
+    return chat_id
 
 
 
