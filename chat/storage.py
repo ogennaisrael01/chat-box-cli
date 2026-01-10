@@ -87,10 +87,10 @@ def create_chat_table(connection: Connection) -> None:
 def save_chat(conn: Connection, chat_data: Dict[str, str]) -> str:
     """Insert a chat message and return the chat_id."""
     cursor = conn.cursor()
-    chat_id = chat_data.get("chat_id")
-    message = chat_data.get("chat_message")
-    sender = chat_data.get("sender")
-    receiver = chat_data.get("receiver")
+    chat_id = chat_data.get("chat_id", None)
+    message = chat_data.get("chat_message",None)
+    sender = chat_data.get("sender", None)
+    receiver = chat_data.get("receiver", None)
     if not all([chat_id, message, sender, receiver]):
         raise ValueError("chat_data must include 'chat_id','chat_message','sender','receiver'")
     query = "INSERT INTO chat (chat_id, message, sender, receiver) VALUES (?, ?, ?, ?)"
@@ -100,7 +100,7 @@ def save_chat(conn: Connection, chat_data: Dict[str, str]) -> str:
 
 @db_connection
 def fetch_chats(connection: Connection, sender: str, receiver: str) -> str:
-    """ Fetch chat between to sender and the reciever"""
+    """ Fetch chat data between sender and the reciever"""
 
     cursor = connection.cursor()
     query = """
