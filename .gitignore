@@ -1,0 +1,11 @@
+chat_box
+.DS_Store
+node_modules/
+sqlite.db   
+.env
+.vscode/
+.idea/
+venv/
+__pycache__/
+*.log
+*.pyc   
