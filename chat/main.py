@@ -1,7 +1,9 @@
 import argparse
 import logging
-from users import add_account
-from storage import create_table_users, create_chat_table
+from users import add_account, check_user_in_db
+from storage import create_table_users, create_chat_table, fetch_chats
+from chats import add_chat
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -13,6 +15,7 @@ def main(argv=None) -> int:
 
     sub.add_parser("init-db", help="Create the database tables")
     sub.add_parser("add-user", help="Interactively add a user")
+    sub.add_parser("add-chat", help="Interactively chat with a user")
 
     args = parser.parse_args(argv)
 
@@ -26,6 +29,29 @@ def main(argv=None) -> int:
         user = add_account()
         logger.info("Added user %s", user["user_id"])
         return 0
+    
+    if args.command == "add-chat":
+        print("Welcome to our Chat Application! \nMessage your loved ones with ease.")
+        sender = input("\nEnter you username: ").title()
+        if not check_user_in_db(sender):
+            raise ValueError(f"{sender} is not found, consider adding an account.")
+        
+        receiver = input("Who do you want to chat with? ").title()
+        if not check_user_in_db(receiver):
+            raise ValueError(f"{receiver} is not found. contact support for this user or try connecting another user")
+        chats = fetch_chats(sender=sender, receiver=receiver)
+        print(f"Your chats With {receiver} loading....")
+        time.sleep(2)
+        if chats is None:
+            print(f"No Chats between you and {receiver}")
+            return 0
+        for chat in chats:
+            print(f"\n{chat}")
+
+        chat = add_chat(sender=sender, receiver=receiver)
+        logger.info("Chat sent %s", chat["chat_id"])
+        return 0
+
 
     parser.print_help()
     return 2

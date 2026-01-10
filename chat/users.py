@@ -16,8 +16,9 @@ def add_account() -> Dict[str, str]:
     username = input("Enter your username: ").strip()
     if not username or username.isdigit():
         raise ValueError("Only non-empty alphabetic usernames are allowed")
-
     username = username.title()
+    if check_user_in_db(user_name=username):
+        raise ValueError("User with this username already exists!")
     user_data = to_dict(username)
     user_data.update({"user_id": str(uuid.uuid4())})
     save_users(user_data=user_data)

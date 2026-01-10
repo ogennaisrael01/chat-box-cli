@@ -15,10 +15,10 @@ def add_chat(sender: str, receiver: str) -> Dict[str, str]:
 
     Returns the saved chat dict.
     """
-    if not check_user_in_db(receiver):
+    if not check_user_in_db(receiver.title()):
         raise ValueError("Receiver not found in database")
 
-    message = input("Enter your chat: ").strip()
+    message = input("\n\nEnter your chat: ").strip()
     if not message:
         raise ValueError("Chat message cannot be empty")
 

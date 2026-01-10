@@ -98,7 +98,23 @@ def save_chat(conn: Connection, chat_data: Dict[str, str]) -> str:
     return chat_id
 
 
+@db_connection
+def fetch_chats(connection: Connection, sender: str, receiver: str) -> str:
+    """ Fetch chat between to sender and the reciever"""
 
+    cursor = connection.cursor()
+    query = """
+            SELECT chat_id, message
+            FROM chat
+            WHERE (sender = ? AND receiver = ?)
+            OR (sender = ? AND receiver = ?)
+            """
+
+    data = (sender, receiver, receiver, sender)
+    cursor.execute(query, data)
+    response = cursor.fetchall()
+
+    return [ row[1] for row in response]
 
 
 
