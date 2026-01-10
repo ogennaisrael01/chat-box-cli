@@ -99,7 +99,7 @@ def save_chat(conn: Connection, chat_data: Dict[str, str]) -> str:
 
 
 @db_connection
-def fetch_chats(connection: Connection, sender: str, receiver: str) -> str:
+def fetch_chats(connection: Connection, sender: str, receiver: str) -> List[str]:
     """ Fetch chat data between sender and the reciever"""
 
     cursor = connection.cursor()
