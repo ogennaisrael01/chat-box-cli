@@ -82,6 +82,21 @@ def create_chat_table(connection: Connection) -> None:
     """
     cursor.execute(query)
 
+@db_connection
+def create_chat_ai_table(connection: Connection):
+    cursor = connection.cursor()
+    query = """
+    CREATE TABLE IF NOT EXISTS chat_ai (
+        chat_id TEXT PRIMARY KEY,
+        message TEXT NULL,
+        role TEXT NOT NULL,
+        sender TEXT NULL,
+        ai_response TEXT NULL,
+        date_created DATE 
+    )
+    """
+    cursor.execute(query)
+
 
 @db_connection
 def save_chat(conn: Connection, chat_data: Dict[str, str]) -> str:
@@ -117,5 +132,44 @@ def fetch_chats(connection: Connection, sender: str, receiver: str) -> List[str]
     return [ row[1] for row in response]
 
 
+@db_connection
+def save_chat_ai(connection: Connection, chat_data:dict):
+    """Insert a chat message and return the chat_id."""
+    cursor = connection.cursor()
+    chat_id = chat_data.get("chat_ai_id", None)
+    message = chat_data.get("message",None)
+    sender = chat_data.get("sender", None)
+    ai_response = chat_data.get("ai_response", None)
+    role = chat_data.get("role", None)
+    date_created = chat_data.get("date_created", None)
+    if not all([chat_id, role, sender]):
+        raise ValueError("chat_data must include 'chat_id','sender', 'role'")
+    query = "INSERT INTO chat_ai (chat_id, message, sender, ai_response, date_created, role) VALUES (?, ?, ?, ?, ?, ?)"
+    cursor.execute(query, (chat_id, message, sender, ai_response, date_created, role))
+    return chat_id
 
+@db_connection
+def fetch_last_n_chats(connection: Connection, sender):
+    """Fetch the last chat between AI and user """
+    cursor = connection.cursor()
+    query = """
+            SELECT role, ai_response, message
+            FROM chat_ai
+            WHERE (sender = ?)
+            ORDER BY date_created DESC
+            LIMIT 5
+            """
 
+    data = sender.lower()
+    cursor.execute(query, (data,))
+    response = cursor.fetchall()
+    return [
+        {
+            "role": data[0],
+            "parts": [{ "text": data[1] if data[0] == "model" else data[2] }]
+        }
+        for data in response
+    ]
+
+if __name__ == "__main__":
+    create_chat_ai_table()
