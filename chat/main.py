@@ -68,11 +68,9 @@ def main(argv=None) -> int:
 
             model_chat = add_chat_role_model(sender=name, message=user_chat["message"])
             logger.info("AI Response")
-            print(f"\n\n{model_chat["ai_response"]}")
-
+            print(f"\n\n{model_chat['ai_response']}")
     parser.print_help()
     return 2
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
