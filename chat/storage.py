@@ -150,7 +150,7 @@ def save_chat_ai(connection: Connection, chat_data:dict):
 
 @db_connection
 def fetch_last_n_chats(connection: Connection, sender):
-    """Fetch the last chat between AI and user """
+    """Fetch the last chats between AI and user """
     cursor = connection.cursor()
     query = """
             SELECT role, ai_response, message
@@ -159,7 +159,6 @@ def fetch_last_n_chats(connection: Connection, sender):
             ORDER BY date_created DESC
             LIMIT 5
             """
-
     data = sender.lower()
     cursor.execute(query, (data,))
     response = cursor.fetchall()

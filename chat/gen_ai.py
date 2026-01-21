@@ -5,7 +5,7 @@ from helpers import retry_on_failure
 
 logger = logging.getLogger(__name__)
 
-GOOGLE_API_SECRET = os.getenv("GOOGLE_API_SECRET")
+GOOGLE_API_SECRET = os.getenv("GOOGLE_API_SECRET", 'AIzaSyCQZEgJszJMnOEMziSCsBksD3v7L6m9LCM')
 
 @retry_on_failure
 def chats_ai(message: str, history: list):
